@@ -69,9 +69,14 @@ module.exports = {
           name: '⚙️ Configuration', 
           value: '`setlog`, `setprefix`, `automod`',
           inline: false 
+        },
+        { 
+          name: '🛡️ Anti-Nuke Protection', 
+          value: '`antinuke enable`, `antinuke disable`, `antinuke status`, `antinuke whitelist`, `antinuke list`',
+          inline: false 
         }
       )
-      .setFooter({ text: 'Use r!help <command> for detailed information' })
+      .setFooter({ text: 'Use !help <command> for detailed information' })
       .setTimestamp();
 
     message.reply({ embeds: [embed] });
