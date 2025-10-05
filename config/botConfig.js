@@ -45,4 +45,17 @@ module.exports = {
   giveaway: {
     defaultEmoji: '🎉',
   },
+
+  welcome: {
+    enabled: false,
+    channel: null,
+    message: 'Welcome {user} to {server}!',
+  },
+
+  starboard: {
+    enabled: false,
+    channel: null,
+    threshold: 5,
+    emoji: '⭐',
+  },
 };

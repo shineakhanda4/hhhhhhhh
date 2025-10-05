@@ -48,6 +48,31 @@ module.exports = {
       }
     }
 
+    if (client.config.welcome.enabled && client.config.welcome.channel) {
+      try {
+        const welcomeChannel = member.guild.channels.cache.get(client.config.welcome.channel);
+        if (welcomeChannel) {
+          const welcomeMsg = client.config.welcome.message
+            .replace('{user}', `${member.user}`)
+            .replace('{username}', member.user.username)
+            .replace('{server}', member.guild.name)
+            .replace('{membercount}', member.guild.memberCount);
+
+          const welcomeEmbed = new EmbedBuilder()
+            .setColor('#00FF00')
+            .setTitle('👋 Welcome!')
+            .setDescription(welcomeMsg)
+            .setThumbnail(member.user.displayAvatarURL())
+            .setFooter({ text: `Member #${member.guild.memberCount}` })
+            .setTimestamp();
+
+          await welcomeChannel.send({ embeds: [welcomeEmbed] });
+        }
+      } catch (error) {
+        console.error('Error sending welcome message:', error);
+      }
+    }
+
     if (!client.config.logging.enabled || !client.config.logging.logChannel) return;
 
     try {
