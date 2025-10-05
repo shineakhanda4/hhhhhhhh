@@ -3,15 +3,21 @@ const { PermissionsBitField, EmbedBuilder, ChannelType, ActionRowBuilder, Button
 module.exports = {
   name: 'ticket',
   description: 'Ticket system commands',
-  usage: '<create|close|add|remove>',
+  usage: '<setup|create|close|add|remove>',
   async execute(message, args, client) {
     const subcommand = args[0]?.toLowerCase();
 
     if (!subcommand) {
-      return message.reply('❌ Usage: `ticket <create|close|add|remove>`');
+      return message.reply('❌ Usage: `ticket <setup|create|close|add|remove>`');
     }
 
     switch (subcommand) {
+      case 'setup':
+        if (!message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+          return message.reply('❌ You need Administrator permission to setup the ticket system!');
+        }
+        await setupTicketPanel(message, client);
+        break;
       case 'create':
         await createTicket(message, args.slice(1), client);
         break;
@@ -25,10 +31,39 @@ module.exports = {
         await removeFromTicket(message, args.slice(1), client);
         break;
       default:
-        message.reply('❌ Invalid subcommand! Use: create, close, add, remove');
+        message.reply('❌ Invalid subcommand! Use: setup, create, close, add, remove');
     }
   },
 };
+
+async function setupTicketPanel(message, client) {
+  try {
+    const embed = new EmbedBuilder()
+      .setColor('#5865F2')
+      .setTitle('🎫 Support Ticket System')
+      .setDescription('Need help? Click the button below to create a support ticket!\n\nA staff member will assist you as soon as possible.')
+      .addFields(
+        { name: '📝 How it works', value: 'Click "Create Ticket" to open a private channel where you can describe your issue.' },
+        { name: '⏱️ Response Time', value: 'Staff typically respond within a few hours.' }
+      )
+      .setFooter({ text: 'Click the button below to get started!' })
+      .setTimestamp();
+
+    const button = new ButtonBuilder()
+      .setCustomId('create_ticket')
+      .setLabel('Create Ticket')
+      .setEmoji('🎫')
+      .setStyle(ButtonStyle.Primary);
+
+    const row = new ActionRowBuilder().addComponents(button);
+
+    await message.channel.send({ embeds: [embed], components: [row] });
+    message.reply('✅ Ticket panel has been set up successfully!');
+  } catch (error) {
+    console.error(error);
+    message.reply('❌ Failed to setup ticket panel!');
+  }
+}
 
 async function createTicket(message, args, client) {
   const reason = args.join(' ') || 'No reason provided';
