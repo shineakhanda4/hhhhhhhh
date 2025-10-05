@@ -71,6 +71,16 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 - Log channel setup
 - Automod configuration
 
+### ✅ Anti-Nuke Protection System (NEW)
+- Real-time malicious action detection
+- Mass channel deletion protection
+- Mass role deletion protection
+- Mass ban/kick detection
+- Unauthorized bot addition blocking
+- Whitelist system for trusted users
+- Automatic punishment (role removal)
+- Owner notifications for security events
+
 ## Project Structure
 ```
 ├── index.js                 # Main bot file
@@ -108,21 +118,27 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 4. Run the bot
 
 ## Default Configuration
-- Prefix: `r!`
+- Prefix: `!` (changed from `r!`)
 - Automod: Enabled
+- Anti-Nuke: Disabled by default (use `!antinuke enable` to activate)
 - Color: Discord Blurple (#5865F2)
 
 ## Database
 - Uses PostgreSQL for persistent data storage
-- All moderation actions, tickets, tags, suggestions, giveaways, and analytics are saved
+- All moderation actions, tickets, tags, suggestions, giveaways, analytics, and anti-nuke whitelist are saved
+- 13 total database tables including the new anti-nuke whitelist
 - Data survives bot restarts and deployments
 - Automatic database initialization on startup
 
 ## Recent Changes (October 2025)
-- ✅ **Complete PostgreSQL migration** - All 12 database tables created and functional (warnings, mutes, tickets, tags, suggestions, giveaways, reminders, AFK, notes, reaction roles, analytics, triggers)
+- ✅ **Complete PostgreSQL migration** - All 13 database tables created and functional (warnings, mutes, tickets, tags, suggestions, giveaways, reminders, AFK, notes, reaction roles, analytics, triggers, anti-nuke whitelist)
+- ✅ **Anti-Nuke Protection System Added** - Comprehensive server security against mass deletions, bans, kicks, and unauthorized bots
+- ✅ **Command Prefix Changed** - Updated from `r!` to `!` for easier access
+- ✅ **Enhanced Event Handlers** - Added 5 new anti-nuke event handlers (channelDelete, roleDelete, guildBanAdd, enhanced guildMemberAdd/Remove)
+- ✅ **Updated Help Command** - Now includes all anti-nuke commands with the new prefix
 - ✅ **Fixed all async/await patterns** - Every database operation properly awaits results across all commands and events
 - ✅ **Trigger system database integration** - Migrated triggers from in-memory Map to PostgreSQL with proper async handlers
 - ✅ **Production deployment** - Bot successfully running as "CRICUIT MC#7282" with all systems operational
 - ✅ **Architect verified** - Final comprehensive review confirmed PRODUCTION-READY status with zero remaining blockers
-- All 50+ commands across 10+ categories fully functional with persistent data storage
-- Complete R.O.T.I feature parity achieved plus unique analytics dashboard
+- All 50+ commands across 11 categories fully functional with persistent data storage
+- Complete R.O.T.I feature parity achieved plus unique analytics dashboard and anti-nuke protection
