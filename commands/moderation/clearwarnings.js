@@ -13,7 +13,7 @@ module.exports = {
       return message.reply('❌ Please mention a valid member!');
     }
 
-    client.db.clearWarnings(message.guild.id, member.id);
+    await client.db.clearWarnings(message.guild.id, member.id);
 
     const embed = new EmbedBuilder()
       .setColor('#00FF00')

@@ -14,7 +14,7 @@ module.exports = {
       return message.reply('❌ Usage: `suggestion <approve|deny> <message_id> [reason]`');
     }
 
-    const suggestion = client.db.getSuggestion(messageId);
+    const suggestion = await client.db.getSuggestion(messageId);
     
     if (!suggestion) {
       return message.reply('❌ Suggestion not found!');
@@ -33,7 +33,7 @@ module.exports = {
         .addFields({ name: 'Review', value: `By ${message.author.tag}: ${reason}` });
 
       await suggestionMsg.edit({ embeds: [newEmbed] });
-      client.db.updateSuggestion(messageId, action === 'approve' ? 'approved' : 'denied');
+      await client.db.updateSuggestion(messageId, action === 'approve' ? 'approved' : 'denied');
 
       message.reply(`✅ Suggestion ${action}ed!`);
     } catch (error) {

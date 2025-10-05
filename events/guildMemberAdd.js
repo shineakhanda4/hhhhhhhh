@@ -3,7 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
   name: 'guildMemberAdd',
   async execute(member, client) {
-    client.db.trackEvent(member.guild.id, 'membersJoined');
+    await client.db.trackEvent(member.guild.id, 'membersJoined');
 
     if (!client.config.logging.enabled || !client.config.logging.logChannel) return;
 

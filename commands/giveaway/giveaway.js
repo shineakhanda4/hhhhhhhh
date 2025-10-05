@@ -49,7 +49,8 @@ async function startGiveaway(message, args, client) {
   const giveawayMsg = await message.channel.send({ embeds: [embed] });
   await giveawayMsg.react('🎉');
 
-  client.db.createGiveaway(giveawayMsg.id, {
+  await client.db.createGiveaway(giveawayMsg.id, {
+    guildId: message.guild.id,
     prize,
     winners,
     endTime,
@@ -68,7 +69,7 @@ async function endGiveaway(message, args, client) {
     return message.reply('❌ Usage: `giveaway end <message_id>`');
   }
 
-  const giveaway = client.db.getGiveaway(messageId);
+  const giveaway = await client.db.getGiveaway(messageId);
   
   if (!giveaway) {
     return message.reply('❌ Giveaway not found!');
@@ -97,7 +98,7 @@ async function endGiveaway(message, args, client) {
     const winnerMentions = winners.map(w => `<@${w.id}>`).join(', ');
     await giveawayMsg.reply(`🎉 Congratulations ${winnerMentions}! You won: **${giveaway.prize}**`);
     
-    client.db.endGiveaway(messageId);
+    await client.db.endGiveaway(messageId);
     message.reply('✅ Giveaway ended!');
   } catch (error) {
     console.error(error);

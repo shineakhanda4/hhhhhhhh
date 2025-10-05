@@ -20,8 +20,7 @@ module.exports = {
         return message.reply('❌ Usage: `trigger create <trigger> <response>`');
       }
 
-      const key = `${message.guild.id}-${trigger}`;
-      client.db.triggers.set(key, { response });
+      await client.db.addTrigger(message.guild.id, trigger, response);
       message.reply(`✅ Trigger \`${trigger}\` created!`);
       
     } else if (action === 'delete') {
@@ -31,12 +30,7 @@ module.exports = {
         return message.reply('❌ Usage: `trigger delete <trigger>`');
       }
 
-      const key = `${message.guild.id}-${trigger}`;
-      if (!client.db.triggers.has(key)) {
-        return message.reply('❌ Trigger not found!');
-      }
-
-      client.db.triggers.delete(key);
+      await client.db.deleteTrigger(message.guild.id, trigger);
       message.reply(`✅ Trigger \`${trigger}\` deleted!`);
     } else {
       message.reply('❌ Invalid action! Use: create, delete');

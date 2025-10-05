@@ -18,28 +18,37 @@ module.exports = {
   },
 };
 
-function checkReminders(client) {
-  const now = Date.now();
-  for (const [userId, reminders] of client.db.reminders) {
-    for (let i = reminders.length - 1; i >= 0; i--) {
-      if (now >= reminders[i].time) {
-        client.users.fetch(userId).then(user => {
-          user.send(`⏰ Reminder: ${reminders[i].message}`).catch(() => {});
-        }).catch(() => {});
-        client.db.removeReminder(userId, i);
+async function checkReminders(client) {
+  try {
+    const pendingReminders = await client.db.getPendingReminders();
+    
+    for (const reminder of pendingReminders) {
+      try {
+        const user = await client.users.fetch(reminder.userId);
+        await user.send(`⏰ Reminder: ${reminder.message}`);
+        await client.db.deleteReminder(reminder.id);
+      } catch (error) {
+        console.error('Error sending reminder:', error);
+        await client.db.deleteReminder(reminder.id);
       }
     }
+  } catch (error) {
+    console.error('Error checking reminders:', error);
   }
 }
 
-function checkGiveaways(client) {
-  const now = Date.now();
-  const giveaways = client.db.getAllActiveGiveaways();
-  
-  for (const giveaway of giveaways) {
-    if (now >= giveaway.endTime) {
-      endGiveaway(client, giveaway);
+async function checkGiveaways(client) {
+  try {
+    const now = Date.now();
+    const giveaways = await client.db.getAllActiveGiveaways();
+    
+    for (const giveaway of giveaways) {
+      if (now >= giveaway.endTime) {
+        await endGiveaway(client, giveaway);
+      }
     }
+  } catch (error) {
+    console.error('Error checking giveaways:', error);
   }
 }
 
@@ -50,7 +59,7 @@ async function endGiveaway(client, giveaway) {
     
     const reactions = message.reactions.cache.get(giveaway.emoji);
     if (!reactions) {
-      client.db.endGiveaway(giveaway.messageId);
+      await client.db.endGiveaway(giveaway.messageId);
       return;
     }
 
@@ -59,7 +68,7 @@ async function endGiveaway(client, giveaway) {
     
     if (participants.size === 0) {
       await message.reply('No valid participants for this giveaway!');
-      client.db.endGiveaway(giveaway.messageId);
+      await client.db.endGiveaway(giveaway.messageId);
       return;
     }
 
@@ -74,7 +83,7 @@ async function endGiveaway(client, giveaway) {
     const winnerMentions = winners.map(w => `<@${w.id}>`).join(', ');
     await message.reply(`🎉 Congratulations ${winnerMentions}! You won: **${giveaway.prize}**`);
     
-    client.db.endGiveaway(giveaway.messageId);
+    await client.db.endGiveaway(giveaway.messageId);
   } catch (error) {
     console.error('Error ending giveaway:', error);
   }

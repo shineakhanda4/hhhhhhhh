@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, Partials } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const { db, initDatabase } = require('./database/postgres');
 
 const client = new Client({
   intents: [
@@ -19,7 +20,7 @@ const client = new Client({
 
 client.commands = new Collection();
 client.config = require('./config/botConfig');
-client.db = require('./database/storage');
+client.db = db;
 
 const commandsPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(commandsPath);
@@ -50,4 +51,9 @@ for (const file of eventFiles) {
   }
 }
 
-client.login(process.env.DISCORD_TOKEN);
+initDatabase().then(() => {
+  client.login(process.env.DISCORD_TOKEN);
+}).catch(error => {
+  console.error('Failed to initialize database:', error);
+  process.exit(1);
+});

@@ -24,7 +24,8 @@ module.exports = {
     await suggestionMsg.react('👍');
     await suggestionMsg.react('👎');
 
-    client.db.addSuggestion(suggestionMsg.id, {
+    await client.db.addSuggestion(suggestionMsg.id, {
+      guildId: message.guild.id,
       userId: message.author.id,
       suggestion,
       status: 'pending',

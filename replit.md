@@ -112,8 +112,17 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 - Automod: Enabled
 - Color: Discord Blurple (#5865F2)
 
+## Database
+- Uses PostgreSQL for persistent data storage
+- All moderation actions, tickets, tags, suggestions, giveaways, and analytics are saved
+- Data survives bot restarts and deployments
+- Automatic database initialization on startup
+
 ## Recent Changes
+- Migrated from in-memory storage to PostgreSQL database for data persistence
+- Fixed all async/await patterns for proper database operations
 - Created complete bot infrastructure with all R.O.T.I features
 - Implemented unique analytics dashboard feature
 - Added comprehensive event handling system
 - Built modular command structure for easy expansion
+- All features now production-ready with persistent storage

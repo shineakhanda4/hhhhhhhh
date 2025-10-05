@@ -17,9 +17,9 @@ module.exports = {
       return message.reply('❌ Please provide a reason for the warning!');
     }
 
-    client.db.addWarning(message.guild.id, member.id, reason, message.author.tag);
+    await client.db.addWarning(message.guild.id, member.id, reason, message.author.tag);
 
-    const warnings = client.db.getWarnings(message.guild.id, member.id);
+    const warnings = await client.db.getWarnings(message.guild.id, member.id);
 
     const embed = new EmbedBuilder()
       .setColor('#FFFF00')
@@ -34,6 +34,6 @@ module.exports = {
 
     await member.send(`You have been warned in **${message.guild.name}** for: ${reason}`).catch(() => {});
     message.reply({ embeds: [embed] });
-    client.db.trackEvent(message.guild.id, 'moderationActions');
+    await client.db.trackEvent(message.guild.id, 'moderationActions');
   },
 };

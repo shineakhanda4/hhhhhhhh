@@ -3,7 +3,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
   name: 'guildMemberRemove',
   async execute(member, client) {
-    client.db.trackEvent(member.guild.id, 'membersLeft');
+    await client.db.trackEvent(member.guild.id, 'membersLeft');
 
     if (!client.config.logging.enabled || !client.config.logging.logChannel) return;
 

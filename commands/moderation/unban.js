@@ -22,7 +22,7 @@ module.exports = {
         .setTimestamp();
 
       message.reply({ embeds: [embed] });
-      client.db.trackEvent(message.guild.id, 'moderationActions');
+      await client.db.trackEvent(message.guild.id, 'moderationActions');
     } catch (error) {
       console.error(error);
       message.reply('❌ Failed to unban the user! Make sure they are banned and the ID is correct.');

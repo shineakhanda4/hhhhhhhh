@@ -20,7 +20,7 @@ module.exports = {
       
       const reply = await message.channel.send(`✅ Deleted ${amount} messages!`);
       setTimeout(() => reply.delete().catch(() => {}), 5000);
-      client.db.trackEvent(message.guild.id, 'moderationActions');
+      await client.db.trackEvent(message.guild.id, 'moderationActions');
     } catch (error) {
       console.error(error);
       message.reply('❌ Failed to delete messages! Messages older than 14 days cannot be bulk deleted.');

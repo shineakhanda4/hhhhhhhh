@@ -67,7 +67,8 @@ async function createTicket(message, args, client) {
 
     await ticketChannel.send({ embeds: [embed] });
     
-    client.db.createTicket(ticketChannel.id, {
+    await client.db.createTicket(ticketChannel.id, {
+      guildId: message.guild.id,
       userId: message.author.id,
       reason,
       createdAt: Date.now(),
@@ -81,7 +82,7 @@ async function createTicket(message, args, client) {
 }
 
 async function closeTicket(message, client) {
-  const ticket = client.db.getTicket(message.channel.id);
+  const ticket = await client.db.getTicket(message.channel.id);
   
   if (!ticket) {
     return message.reply('❌ This is not a ticket channel!');
@@ -97,7 +98,7 @@ async function closeTicket(message, client) {
     await message.channel.send({ embeds: [embed] });
     
     setTimeout(async () => {
-      client.db.closeTicket(message.channel.id);
+      await client.db.closeTicket(message.channel.id);
       await message.channel.delete();
     }, 5000);
   } catch (error) {
@@ -107,7 +108,7 @@ async function closeTicket(message, client) {
 }
 
 async function addToTicket(message, args, client) {
-  const ticket = client.db.getTicket(message.channel.id);
+  const ticket = await client.db.getTicket(message.channel.id);
   
   if (!ticket) {
     return message.reply('❌ This is not a ticket channel!');
@@ -133,7 +134,7 @@ async function addToTicket(message, args, client) {
 }
 
 async function removeFromTicket(message, args, client) {
-  const ticket = client.db.getTicket(message.channel.id);
+  const ticket = await client.db.getTicket(message.channel.id);
   
   if (!ticket) {
     return message.reply('❌ This is not a ticket channel!');

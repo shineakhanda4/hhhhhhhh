@@ -11,34 +11,34 @@ module.exports = {
       return;
     }
 
-    client.db.trackEvent(message.guild.id, 'messagesSent');
+    await client.db.trackEvent(message.guild.id, 'messagesSent');
 
-    const afkUser = client.db.getAFK(message.author.id);
+    const afkUser = await client.db.getAFK(message.author.id);
     if (afkUser) {
-      client.db.removeAFK(message.author.id);
+      await client.db.removeAFK(message.author.id);
       message.reply(`Welcome back! Your AFK status has been removed.`).then(msg => {
         setTimeout(() => msg.delete().catch(() => {}), 5000);
       }).catch(() => {});
     }
 
-    message.mentions.users.forEach(user => {
-      const afk = client.db.getAFK(user.id);
+    for (const user of message.mentions.users.values()) {
+      const afk = await client.db.getAFK(user.id);
       if (afk) {
         message.reply(`${user.username} is currently AFK: ${afk.message}`).then(msg => {
           setTimeout(() => msg.delete().catch(() => {}), 5000);
         }).catch(() => {});
       }
-    });
+    }
 
     if (client.config.automod.enabled && !message.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-      if (automodCheck(message, client)) {
+      if (await automodCheck(message, client)) {
         return;
       }
     }
 
     const prefix = client.config.prefix;
     if (!message.content.startsWith(prefix)) {
-      checkTriggers(message, client);
+      await checkTriggers(message, client);
       return;
     }
 
@@ -49,10 +49,9 @@ module.exports = {
                     client.commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
 
     if (!command) {
-      const tag = client.db.getTag(message.guild.id, commandName);
+      const tag = await client.db.getTag(message.guild.id, commandName);
       if (tag) {
         message.reply(tag.content);
-        tag.uses++;
       }
       return;
     }
@@ -68,7 +67,7 @@ module.exports = {
     }
 
     try {
-      client.db.trackEvent(message.guild.id, 'commandsUsed');
+      await client.db.trackEvent(message.guild.id, 'commandsUsed');
       await command.execute(message, args, client);
     } catch (error) {
       console.error(error);
@@ -77,7 +76,7 @@ module.exports = {
   },
 };
 
-function automodCheck(message, client) {
+async function automodCheck(message, client) {
   const config = client.config.automod;
   
   const content = message.content.toLowerCase();
@@ -87,7 +86,7 @@ function automodCheck(message, client) {
       message.channel.send(`${message.author}, please watch your language!`).then(msg => {
         setTimeout(() => msg.delete().catch(() => {}), 5000);
       });
-      client.db.trackEvent(message.guild.id, 'moderationActions');
+      await client.db.trackEvent(message.guild.id, 'moderationActions');
       return true;
     }
   }
@@ -110,7 +109,7 @@ function automodCheck(message, client) {
       setTimeout(() => msg.delete().catch(() => {}), 5000);
     });
     userSpam.set(userId, []);
-    client.db.trackEvent(message.guild.id, 'moderationActions');
+    await client.db.trackEvent(message.guild.id, 'moderationActions');
     return true;
   }
 
@@ -119,7 +118,7 @@ function automodCheck(message, client) {
     message.channel.send(`${message.author}, please don't spam mentions!`).then(msg => {
       setTimeout(() => msg.delete().catch(() => {}), 5000);
     });
-    client.db.trackEvent(message.guild.id, 'moderationActions');
+    await client.db.trackEvent(message.guild.id, 'moderationActions');
     return true;
   }
 
@@ -130,22 +129,25 @@ function automodCheck(message, client) {
     message.channel.send(`${message.author}, please don't use excessive caps!`).then(msg => {
       setTimeout(() => msg.delete().catch(() => {}), 5000);
     });
-    client.db.trackEvent(message.guild.id, 'moderationActions');
+    await client.db.trackEvent(message.guild.id, 'moderationActions');
     return true;
   }
 
   return false;
 }
 
-function checkTriggers(message, client) {
-  const content = message.content.toLowerCase();
-  for (const [key, value] of client.db.triggers) {
-    if (key.startsWith(`${message.guild.id}-`)) {
-      const trigger = key.split('-')[1];
-      if (content.includes(trigger)) {
-        message.reply(value.response);
+async function checkTriggers(message, client) {
+  try {
+    const triggers = await client.db.getTriggersForGuild(message.guild.id);
+    const content = message.content.toLowerCase();
+    
+    for (const trigger of triggers) {
+      if (content.includes(trigger.trigger.toLowerCase())) {
+        message.reply(trigger.response);
         break;
       }
     }
+  } catch (error) {
+    console.error('Error checking triggers:', error);
   }
 }

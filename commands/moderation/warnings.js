@@ -8,7 +8,7 @@ module.exports = {
   args: true,
   async execute(message, args, client) {
     const member = message.mentions.members.first() || message.member;
-    const warnings = client.db.getWarnings(message.guild.id, member.id);
+    const warnings = await client.db.getWarnings(message.guild.id, member.id);
 
     if (warnings.length === 0) {
       return message.reply('✅ This member has no warnings!');
