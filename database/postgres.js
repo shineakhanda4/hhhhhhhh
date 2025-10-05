@@ -150,6 +150,16 @@ async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS antinuke_whitelist (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(guild_id, user_id)
+      )
+    `);
+
     console.log('✅ Database tables initialized successfully');
   } catch (error) {
     console.error('❌ Database initialization error:', error);
@@ -528,6 +538,39 @@ const db = {
       [guildId]
     );
     return result.rows;
+  },
+
+  async addToAntiNukeWhitelist(guildId, userId) {
+    await pool.query(
+      `INSERT INTO antinuke_whitelist(guild_id, user_id) 
+       VALUES($1, $2) 
+       ON CONFLICT (guild_id, user_id) 
+       DO NOTHING`,
+      [guildId, userId]
+    );
+  },
+
+  async removeFromAntiNukeWhitelist(guildId, userId) {
+    await pool.query(
+      'DELETE FROM antinuke_whitelist WHERE guild_id = $1 AND user_id = $2',
+      [guildId, userId]
+    );
+  },
+
+  async isWhitelisted(guildId, userId) {
+    const result = await pool.query(
+      'SELECT * FROM antinuke_whitelist WHERE guild_id = $1 AND user_id = $2',
+      [guildId, userId]
+    );
+    return result.rows.length > 0;
+  },
+
+  async getWhitelistedUsers(guildId) {
+    const result = await pool.query(
+      'SELECT user_id FROM antinuke_whitelist WHERE guild_id = $1',
+      [guildId]
+    );
+    return result.rows.map(row => row.user_id);
   },
 };
 
