@@ -12,12 +12,12 @@ module.exports = {
       .addFields(
         { 
           name: '👮 Moderation', 
-          value: '`kick`, `ban`, `unban`, `mute`, `unmute`, `warn`, `warnings`, `clearwarnings`, `purge`',
+          value: '`kick`, `ban`, `unban`, `mute`, `unmute`, `warn`, `warnings`, `clearwarnings`, `purge`, `lockdown`, `slowmode`',
           inline: false 
         },
         { 
           name: '🎫 Ticket System', 
-          value: '`ticket create`, `ticket close`, `ticket add`, `ticket remove`',
+          value: '`ticket create`, `ticket close`, `ticket add`, `ticket remove`, `ticket setup` (button panel)',
           inline: false 
         },
         { 
@@ -32,7 +32,7 @@ module.exports = {
         },
         { 
           name: '🎭 Roles', 
-          value: '`role add`, `role remove`, `reactionrole`',
+          value: '`role add`, `role remove`, `reactionrole`, `buttonrole` (button assignment)',
           inline: false 
         },
         { 
@@ -56,8 +56,8 @@ module.exports = {
           inline: false 
         },
         { 
-          name: '🎮 Fun', 
-          value: '`8ball`, `roll`, `coinflip`, `trivia`, `joke`',
+          name: '🎮 Fun & Games', 
+          value: '`8ball`, `roll`, `coinflip`, `trivia`, `joke`, `blackjack`, `rps`, `meme`, `dog`, `cat`',
           inline: false 
         },
         { 
@@ -67,7 +67,7 @@ module.exports = {
         },
         { 
           name: '⚙️ Configuration', 
-          value: '`setlog`, `setprefix`, `automod`',
+          value: '`setlog`, `setprefix`, `automod`, `welcome`, `starboard`',
           inline: false 
         },
         { 
