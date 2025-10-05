@@ -1,0 +1,154 @@
+const { PermissionsBitField, EmbedBuilder, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
+module.exports = {
+  name: 'ticket',
+  description: 'Ticket system commands',
+  usage: '<create|close|add|remove>',
+  async execute(message, args, client) {
+    const subcommand = args[0]?.toLowerCase();
+
+    if (!subcommand) {
+      return message.reply('❌ Usage: `ticket <create|close|add|remove>`');
+    }
+
+    switch (subcommand) {
+      case 'create':
+        await createTicket(message, args.slice(1), client);
+        break;
+      case 'close':
+        await closeTicket(message, client);
+        break;
+      case 'add':
+        await addToTicket(message, args.slice(1), client);
+        break;
+      case 'remove':
+        await removeFromTicket(message, args.slice(1), client);
+        break;
+      default:
+        message.reply('❌ Invalid subcommand! Use: create, close, add, remove');
+    }
+  },
+};
+
+async function createTicket(message, args, client) {
+  const reason = args.join(' ') || 'No reason provided';
+  
+  try {
+    let category = message.guild.channels.cache.find(c => c.name === 'Tickets' && c.type === ChannelType.GuildCategory);
+    
+    if (!category) {
+      category = await message.guild.channels.create({
+        name: 'Tickets',
+        type: ChannelType.GuildCategory,
+      });
+    }
+
+    const ticketChannel = await message.guild.channels.create({
+      name: `ticket-${message.author.username}`,
+      type: ChannelType.GuildText,
+      parent: category.id,
+      permissionOverwrites: [
+        {
+          id: message.guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel],
+        },
+        {
+          id: message.author.id,
+          allow: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ReadMessageHistory],
+        },
+      ],
+    });
+
+    const embed = new EmbedBuilder()
+      .setColor('#5865F2')
+      .setTitle('🎫 Ticket Created')
+      .setDescription(`Welcome ${message.author}!\n\nReason: ${reason}\n\nA staff member will be with you shortly.`)
+      .setTimestamp();
+
+    await ticketChannel.send({ embeds: [embed] });
+    
+    client.db.createTicket(ticketChannel.id, {
+      userId: message.author.id,
+      reason,
+      createdAt: Date.now(),
+    });
+
+    message.reply(`✅ Ticket created! ${ticketChannel}`);
+  } catch (error) {
+    console.error(error);
+    message.reply('❌ Failed to create ticket!');
+  }
+}
+
+async function closeTicket(message, client) {
+  const ticket = client.db.getTicket(message.channel.id);
+  
+  if (!ticket) {
+    return message.reply('❌ This is not a ticket channel!');
+  }
+
+  try {
+    const embed = new EmbedBuilder()
+      .setColor('#FF0000')
+      .setTitle('🎫 Ticket Closed')
+      .setDescription(`Ticket closed by ${message.author}`)
+      .setTimestamp();
+
+    await message.channel.send({ embeds: [embed] });
+    
+    setTimeout(async () => {
+      client.db.closeTicket(message.channel.id);
+      await message.channel.delete();
+    }, 5000);
+  } catch (error) {
+    console.error(error);
+    message.reply('❌ Failed to close ticket!');
+  }
+}
+
+async function addToTicket(message, args, client) {
+  const ticket = client.db.getTicket(message.channel.id);
+  
+  if (!ticket) {
+    return message.reply('❌ This is not a ticket channel!');
+  }
+
+  const member = message.mentions.members.first();
+  if (!member) {
+    return message.reply('❌ Please mention a member to add!');
+  }
+
+  try {
+    await message.channel.permissionOverwrites.create(member, {
+      ViewChannel: true,
+      SendMessages: true,
+      ReadMessageHistory: true,
+    });
+
+    message.reply(`✅ Added ${member} to the ticket!`);
+  } catch (error) {
+    console.error(error);
+    message.reply('❌ Failed to add member!');
+  }
+}
+
+async function removeFromTicket(message, args, client) {
+  const ticket = client.db.getTicket(message.channel.id);
+  
+  if (!ticket) {
+    return message.reply('❌ This is not a ticket channel!');
+  }
+
+  const member = message.mentions.members.first();
+  if (!member) {
+    return message.reply('❌ Please mention a member to remove!');
+  }
+
+  try {
+    await message.channel.permissionOverwrites.delete(member);
+    message.reply(`✅ Removed ${member} from the ticket!`);
+  } catch (error) {
+    console.error(error);
+    message.reply('❌ Failed to remove member!');
+  }
+}
