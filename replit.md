@@ -79,7 +79,7 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 - **Welcome system** for new members
 - **Starboard** to highlight popular messages
 
-### ✅ Anti-Nuke Protection System (NEW)
+### ✅ Anti-Nuke Protection System
 - Real-time malicious action detection
 - Mass channel deletion protection
 - Mass role deletion protection
@@ -88,6 +88,73 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 - Whitelist system for trusted users
 - Automatic punishment (role removal)
 - Owner notifications for security events
+
+### ✅ Levels & XP System (Carl-bot inspired)
+- Message-based XP gain
+- Level progression system
+- Rank command to check progress
+- Server-wide leaderboard
+- Automatic level tracking
+
+### ✅ Auto-Roles & Sticky Roles (Carl-bot inspired)
+- Automatic role assignment on join
+- Sticky roles (re-assigned when users rejoin)
+- Auto-role configuration commands
+- Role persistence system
+
+### ✅ Invite Tracking (Falcon-bot inspired)
+- Track who invited each member
+- Invite statistics per user
+- Invite leaderboard
+- Fake/left invite tracking
+
+### ✅ Message Tracking & Leaderboards (Falcon-bot inspired)
+- Message count tracking per user
+- Live message leaderboards
+- Voice time tracking
+- Account age checker
+
+### ✅ Economy System (OwO-bot inspired)
+- Cowoncy currency system
+- Daily rewards (100-150 Cowoncy)
+- Balance tracking (wallet & bank)
+- Give/transfer commands
+
+### ✅ Animal Collection & Zoo (OwO-bot inspired)
+- Hunt for animals (common to legendary)
+- Build your zoo collection
+- Rarity system (6 tiers)
+- Animal tracking and display
+
+### ✅ Battle & RPG System (OwO-bot inspired)
+- Battle other users
+- Bet Cowoncy on battles
+- Animal-based power system
+- Win/loss tracking
+
+### ✅ Gambling Games (OwO-bot inspired)
+- Slots machine (10x jackpot)
+- Coinflip betting
+- Lottery system
+- Blackjack (existing)
+
+### ✅ Social & Action Commands (OwO-bot inspired)
+- Marriage system (propose, accept, divorce)
+- Action commands: hug, kiss, pat, cuddle, slap, bite, poke, boop, cookie
+- Ship calculator
+- Animated GIF reactions
+
+### ✅ Meme Generators (OwO-bot inspired)
+- Drake meme generator
+- Distracted boyfriend meme
+- Communism meme
+- Custom text memes
+
+### ✅ Advanced Utilities
+- Repeating messages system
+- Drama channel (mod log overview)
+- Account age checker
+- Random choice picker
 
 ## Project Structure
 ```
