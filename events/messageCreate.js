@@ -80,8 +80,37 @@ async function automodCheck(message, client) {
   const config = client.config.automod;
   
   const content = message.content.toLowerCase();
+  
+  if (config.blockInvites) {
+    const inviteRegex = /(discord\.(gg|io|me|li)|discordapp\.com\/invite)\/.+/gi;
+    if (inviteRegex.test(message.content)) {
+      message.delete().catch(() => {});
+      message.channel.send(`${message.author}, Discord invites are not allowed!`).then(msg => {
+        setTimeout(() => msg.delete().catch(() => {}), 5000);
+      });
+      await client.db.trackEvent(message.guild.id, 'moderationActions');
+      return true;
+    }
+  }
+
+  if (config.blockLinks) {
+    const urlRegex = /(https?:\/\/[^\s]+)/gi;
+    const urls = message.content.match(urlRegex);
+    if (urls && urls.length > 0) {
+      const isAllowed = urls.some(url => config.allowedLinks.some(allowed => url.includes(allowed)));
+      if (!isAllowed) {
+        message.delete().catch(() => {});
+        message.channel.send(`${message.author}, links are not allowed in this channel!`).then(msg => {
+          setTimeout(() => msg.delete().catch(() => {}), 5000);
+        });
+        await client.db.trackEvent(message.guild.id, 'moderationActions');
+        return true;
+      }
+    }
+  }
+
   for (const word of config.profanityFilter) {
-    if (content.includes(word)) {
+    if (content.includes(word.toLowerCase())) {
       message.delete().catch(() => {});
       message.channel.send(`${message.author}, please watch your language!`).then(msg => {
         setTimeout(() => msg.delete().catch(() => {}), 5000);

@@ -8,6 +8,12 @@ module.exports = {
         await handleTicketCreation(interaction, client);
       } else if (interaction.customId === 'close_ticket') {
         await handleTicketClose(interaction, client);
+      } else if (interaction.customId.startsWith('role_')) {
+        await handleRoleButton(interaction, client);
+      } else if (interaction.customId.startsWith('blackjack_')) {
+        await handleBlackjack(interaction, client);
+      } else if (interaction.customId.startsWith('rps_')) {
+        await handleRPS(interaction, client);
       }
     }
   },
@@ -134,4 +140,152 @@ async function handleTicketClose(interaction, client) {
       ephemeral: true 
     });
   }
+}
+
+async function handleRoleButton(interaction, client) {
+  const roleId = interaction.customId.replace('role_', '');
+  const role = interaction.guild.roles.cache.get(roleId);
+
+  if (!role) {
+    return interaction.reply({ 
+      content: '❌ Role not found!', 
+      ephemeral: true 
+    });
+  }
+
+  try {
+    if (interaction.member.roles.cache.has(roleId)) {
+      await interaction.member.roles.remove(role);
+      return interaction.reply({ 
+        content: `✅ Removed the ${role.name} role!`, 
+        ephemeral: true 
+      });
+    } else {
+      await interaction.member.roles.add(role);
+      return interaction.reply({ 
+        content: `✅ Added the ${role.name} role!`, 
+        ephemeral: true 
+      });
+    }
+  } catch (error) {
+    console.error('Error managing role:', error);
+    return interaction.reply({ 
+      content: '❌ Failed to manage role!', 
+      ephemeral: true 
+    });
+  }
+}
+
+async function handleBlackjack(interaction, client) {
+  const blackjackCommand = client.commands.get('blackjack');
+  const game = blackjackCommand.activeGames.get(interaction.user.id);
+
+  if (!game) {
+    return interaction.reply({ 
+      content: '❌ You don\'t have an active game!', 
+      ephemeral: true 
+    });
+  }
+
+  const action = interaction.customId.replace('blackjack_', '');
+
+  try {
+    if (action === 'hit') {
+      const newCard = blackjackCommand.drawCard(game.deck);
+      game.playerHand.push(newCard);
+
+      const playerValue = blackjackCommand.calculateHand(game.playerHand);
+
+      if (playerValue > 21) {
+        const embed = blackjackCommand.createGameEmbed(interaction.user, game.playerHand, game.dealerHand, true);
+        embed.setDescription('**You busted! Dealer wins!** 💥');
+        embed.setColor('#FF0000');
+
+        await interaction.update({ embeds: [embed], components: [blackjackCommand.createButtons(true)] });
+        blackjackCommand.activeGames.delete(interaction.user.id);
+      } else {
+        const embed = blackjackCommand.createGameEmbed(interaction.user, game.playerHand, game.dealerHand, false);
+        await interaction.update({ embeds: [embed] });
+      }
+    } else if (action === 'stand') {
+      let dealerValue = blackjackCommand.calculateHand(game.dealerHand);
+
+      while (dealerValue < 17) {
+        const newCard = blackjackCommand.drawCard(game.deck);
+        game.dealerHand.push(newCard);
+        dealerValue = blackjackCommand.calculateHand(game.dealerHand);
+      }
+
+      const playerValue = blackjackCommand.calculateHand(game.playerHand);
+      const embed = blackjackCommand.createGameEmbed(interaction.user, game.playerHand, game.dealerHand, true);
+
+      if (dealerValue > 21 || playerValue > dealerValue) {
+        embed.setDescription('**You win!** 🎉');
+        embed.setColor('#00FF00');
+      } else if (dealerValue === playerValue) {
+        embed.setDescription('**Push! It\'s a tie!** 🤝');
+        embed.setColor('#FFA500');
+      } else {
+        embed.setDescription('**Dealer wins!** 💔');
+        embed.setColor('#FF0000');
+      }
+
+      await interaction.update({ embeds: [embed], components: [blackjackCommand.createButtons(true)] });
+      blackjackCommand.activeGames.delete(interaction.user.id);
+    }
+  } catch (error) {
+    console.error('Error handling blackjack:', error);
+    await interaction.reply({ 
+      content: '❌ An error occurred!', 
+      ephemeral: true 
+    });
+  }
+}
+
+async function handleRPS(interaction, client) {
+  const rpsCommand = client.commands.get('rps');
+  const game = rpsCommand.activeGames.get(interaction.user.id);
+
+  if (!game) {
+    return interaction.reply({ 
+      content: '❌ You don\'t have an active game!', 
+      ephemeral: true 
+    });
+  }
+
+  const choices = ['rock', 'paper', 'scissors'];
+  const playerChoice = interaction.customId.replace('rps_', '');
+  const botChoice = choices[Math.floor(Math.random() * choices.length)];
+
+  const emojis = {
+    rock: '🪨',
+    paper: '📄',
+    scissors: '✂️',
+  };
+
+  let result;
+  if (playerChoice === botChoice) {
+    result = 'It\'s a tie!';
+    color = '#FFA500';
+  } else if (
+    (playerChoice === 'rock' && botChoice === 'scissors') ||
+    (playerChoice === 'paper' && botChoice === 'rock') ||
+    (playerChoice === 'scissors' && botChoice === 'paper')
+  ) {
+    result = 'You win!';
+    color = '#00FF00';
+  } else {
+    result = 'You lose!';
+    color = '#FF0000';
+  }
+
+  const embed = new EmbedBuilder()
+    .setColor(color)
+    .setTitle('🪨📄✂️ Rock Paper Scissors')
+    .setDescription(`**${result}**\n\nYou chose: ${emojis[playerChoice]} ${playerChoice}\nI chose: ${emojis[botChoice]} ${botChoice}`)
+    .setFooter({ text: `Game by ${interaction.user.username}` })
+    .setTimestamp();
+
+  await interaction.update({ embeds: [embed], components: [] });
+  rpsCommand.activeGames.delete(interaction.user.id);
 }

@@ -11,6 +11,9 @@ module.exports = {
     maxMentions: 5,
     maxEmojis: 10,
     capsPercentage: 70,
+    blockInvites: true,
+    blockLinks: false,
+    allowedLinks: [],
   },
   
   antinuke: {
