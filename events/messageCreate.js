@@ -13,6 +13,11 @@ module.exports = {
 
     await client.db.trackEvent(message.guild.id, 'messagesSent');
 
+    await client.db.incrementMessageCount(message.guild.id, message.author.id);
+
+    const xpGain = Math.floor(Math.random() * 10) + 15;
+    await client.db.addXP(message.guild.id, message.author.id, xpGain);
+
     const afkUser = await client.db.getAFK(message.author.id);
     if (afkUser) {
       await client.db.removeAFK(message.author.id);

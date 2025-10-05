@@ -5,6 +5,24 @@ module.exports = {
   async execute(member, client) {
     await client.db.trackEvent(member.guild.id, 'membersJoined');
 
+    const autoRoles = await client.db.getAutoRoles(member.guild.id);
+    for (const roleId of autoRoles) {
+      const role = member.guild.roles.cache.get(roleId);
+      if (role) {
+        await member.roles.add(role).catch(() => {});
+      }
+    }
+
+    const stickyRoles = await client.db.getStickyRoles(member.guild.id, member.id);
+    if (stickyRoles) {
+      for (const roleId of stickyRoles) {
+        const role = member.guild.roles.cache.get(roleId);
+        if (role) {
+          await member.roles.add(role).catch(() => {});
+        }
+      }
+    }
+
     if (client.config.antinuke.enabled && member.user.bot) {
       try {
         await new Promise(resolve => setTimeout(resolve, 500));

@@ -7,6 +7,11 @@ module.exports = {
   async execute(member, client) {
     await client.db.trackEvent(member.guild.id, 'membersLeft');
 
+    const roles = member.roles.cache.filter(r => r.id !== member.guild.id).map(r => r.id);
+    if (roles.length > 0) {
+      await client.db.saveStickyRoles(member.guild.id, member.id, roles);
+    }
+
     if (client.config.antinuke.enabled) {
       try {
         await new Promise(resolve => setTimeout(resolve, 500));

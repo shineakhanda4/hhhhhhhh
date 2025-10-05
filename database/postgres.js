@@ -160,6 +160,159 @@ async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS levels (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        xp BIGINT DEFAULT 0,
+        level INTEGER DEFAULT 0,
+        messages INTEGER DEFAULT 0,
+        UNIQUE(guild_id, user_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sticky_roles (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        roles TEXT NOT NULL,
+        UNIQUE(guild_id, user_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS invites (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        inviter_id VARCHAR(255) NOT NULL,
+        invited_id VARCHAR(255) NOT NULL,
+        invite_code VARCHAR(255),
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS invite_stats (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        total_invites INTEGER DEFAULT 0,
+        left_invites INTEGER DEFAULT 0,
+        fake_invites INTEGER DEFAULT 0,
+        UNIQUE(guild_id, user_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS message_stats (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        message_count BIGINT DEFAULT 0,
+        UNIQUE(guild_id, user_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS voice_stats (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        total_time BIGINT DEFAULT 0,
+        UNIQUE(guild_id, user_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS economy (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        balance BIGINT DEFAULT 0,
+        bank BIGINT DEFAULT 0,
+        daily_last BIGINT,
+        UNIQUE(user_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS animals (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        rarity VARCHAR(50) NOT NULL,
+        count INTEGER DEFAULT 1,
+        UNIQUE(user_id, name)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS pets (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        animal_id INTEGER NOT NULL,
+        nickname VARCHAR(255),
+        level INTEGER DEFAULT 1,
+        strength INTEGER DEFAULT 10,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marriages (
+        id SERIAL PRIMARY KEY,
+        user1_id VARCHAR(255) NOT NULL,
+        user2_id VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user1_id, user2_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS lootboxes (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        count INTEGER DEFAULT 1,
+        UNIQUE(user_id, type)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS enhanced_reaction_roles (
+        id SERIAL PRIMARY KEY,
+        message_id VARCHAR(255) NOT NULL,
+        mode VARCHAR(50) DEFAULT 'normal',
+        max_roles INTEGER,
+        required_roles TEXT,
+        blacklisted_roles TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS auto_roles (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        role_id VARCHAR(255) NOT NULL,
+        UNIQUE(guild_id, role_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS repeating_messages (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        channel_id VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        interval BIGINT NOT NULL,
+        last_sent BIGINT,
+        active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
     console.log('✅ Database tables initialized successfully');
   } catch (error) {
     console.error('❌ Database initialization error:', error);
@@ -571,6 +724,225 @@ const db = {
       [guildId]
     );
     return result.rows.map(row => row.user_id);
+  },
+
+  async addXP(guildId, userId, amount) {
+    await pool.query(
+      `INSERT INTO levels(guild_id, user_id, xp, messages) 
+       VALUES($1, $2, $3, 1) 
+       ON CONFLICT (guild_id, user_id) 
+       DO UPDATE SET xp = levels.xp + $3, messages = levels.messages + 1`,
+      [guildId, userId, amount]
+    );
+  },
+
+  async getUserLevel(guildId, userId) {
+    const result = await pool.query(
+      'SELECT * FROM levels WHERE guild_id = $1 AND user_id = $2',
+      [guildId, userId]
+    );
+    if (result.rows.length === 0) return { xp: 0, level: 0, messages: 0 };
+    return result.rows[0];
+  },
+
+  async getTopLevels(guildId, limit = 10) {
+    const result = await pool.query(
+      'SELECT user_id, xp, level, messages FROM levels WHERE guild_id = $1 ORDER BY xp DESC LIMIT $2',
+      [guildId, limit]
+    );
+    return result.rows;
+  },
+
+  async saveStickyRoles(guildId, userId, roles) {
+    await pool.query(
+      `INSERT INTO sticky_roles(guild_id, user_id, roles) 
+       VALUES($1, $2, $3) 
+       ON CONFLICT (guild_id, user_id) 
+       DO UPDATE SET roles = $3`,
+      [guildId, userId, JSON.stringify(roles)]
+    );
+  },
+
+  async getStickyRoles(guildId, userId) {
+    const result = await pool.query(
+      'SELECT roles FROM sticky_roles WHERE guild_id = $1 AND user_id = $2',
+      [guildId, userId]
+    );
+    if (result.rows.length === 0) return null;
+    return JSON.parse(result.rows[0].roles);
+  },
+
+  async addInvite(guildId, inviterId, invitedId, inviteCode) {
+    await pool.query(
+      'INSERT INTO invites(guild_id, inviter_id, invited_id, invite_code) VALUES($1, $2, $3, $4)',
+      [guildId, inviterId, invitedId, inviteCode]
+    );
+    await pool.query(
+      `INSERT INTO invite_stats(guild_id, user_id, total_invites) 
+       VALUES($1, $2, 1) 
+       ON CONFLICT (guild_id, user_id) 
+       DO UPDATE SET total_invites = invite_stats.total_invites + 1`,
+      [guildId, inviterId]
+    );
+  },
+
+  async getInviteStats(guildId, userId) {
+    const result = await pool.query(
+      'SELECT * FROM invite_stats WHERE guild_id = $1 AND user_id = $2',
+      [guildId, userId]
+    );
+    if (result.rows.length === 0) return { total_invites: 0, left_invites: 0, fake_invites: 0 };
+    return result.rows[0];
+  },
+
+  async getTopInviters(guildId, limit = 10) {
+    const result = await pool.query(
+      'SELECT user_id, total_invites, left_invites, fake_invites FROM invite_stats WHERE guild_id = $1 ORDER BY total_invites DESC LIMIT $2',
+      [guildId, limit]
+    );
+    return result.rows;
+  },
+
+  async incrementMessageCount(guildId, userId) {
+    await pool.query(
+      `INSERT INTO message_stats(guild_id, user_id, message_count) 
+       VALUES($1, $2, 1) 
+       ON CONFLICT (guild_id, user_id) 
+       DO UPDATE SET message_count = message_stats.message_count + 1`,
+      [guildId, userId]
+    );
+  },
+
+  async getMessageStats(guildId, userId) {
+    const result = await pool.query(
+      'SELECT message_count FROM message_stats WHERE guild_id = $1 AND user_id = $2',
+      [guildId, userId]
+    );
+    if (result.rows.length === 0) return 0;
+    return result.rows[0].message_count;
+  },
+
+  async getTopMessagers(guildId, limit = 10) {
+    const result = await pool.query(
+      'SELECT user_id, message_count FROM message_stats WHERE guild_id = $1 ORDER BY message_count DESC LIMIT $2',
+      [guildId, limit]
+    );
+    return result.rows;
+  },
+
+  async addVoiceTime(guildId, userId, time) {
+    await pool.query(
+      `INSERT INTO voice_stats(guild_id, user_id, total_time) 
+       VALUES($1, $2, $3) 
+       ON CONFLICT (guild_id, user_id) 
+       DO UPDATE SET total_time = voice_stats.total_time + $3`,
+      [guildId, userId, time]
+    );
+  },
+
+  async getBalance(userId) {
+    const result = await pool.query(
+      'SELECT * FROM economy WHERE user_id = $1',
+      [userId]
+    );
+    if (result.rows.length === 0) return { balance: 0, bank: 0 };
+    return result.rows[0];
+  },
+
+  async addBalance(userId, amount) {
+    await pool.query(
+      `INSERT INTO economy(user_id, balance) 
+       VALUES($1, $2) 
+       ON CONFLICT (user_id) 
+       DO UPDATE SET balance = economy.balance + $2`,
+      [userId, amount]
+    );
+  },
+
+  async setDaily(userId) {
+    await pool.query(
+      `INSERT INTO economy(user_id, daily_last) 
+       VALUES($1, $2) 
+       ON CONFLICT (user_id) 
+       DO UPDATE SET daily_last = $2`,
+      [userId, Date.now()]
+    );
+  },
+
+  async addAnimal(userId, name, rarity) {
+    await pool.query(
+      `INSERT INTO animals(user_id, name, rarity, count) 
+       VALUES($1, $2, $3, 1) 
+       ON CONFLICT (user_id, name) 
+       DO UPDATE SET count = animals.count + 1`,
+      [userId, name, rarity]
+    );
+  },
+
+  async getZoo(userId) {
+    const result = await pool.query(
+      'SELECT * FROM animals WHERE user_id = $1 ORDER BY rarity, name',
+      [userId]
+    );
+    return result.rows;
+  },
+
+  async createMarriage(user1Id, user2Id) {
+    await pool.query(
+      'INSERT INTO marriages(user1_id, user2_id) VALUES($1, $2)',
+      [user1Id, user2Id]
+    );
+  },
+
+  async getMarriage(userId) {
+    const result = await pool.query(
+      'SELECT * FROM marriages WHERE user1_id = $1 OR user2_id = $1',
+      [userId]
+    );
+    if (result.rows.length === 0) return null;
+    return result.rows[0];
+  },
+
+  async deleteMarriage(userId) {
+    await pool.query(
+      'DELETE FROM marriages WHERE user1_id = $1 OR user2_id = $1',
+      [userId]
+    );
+  },
+
+  async addLootbox(userId, type) {
+    await pool.query(
+      `INSERT INTO lootboxes(user_id, type, count) 
+       VALUES($1, $2, 1) 
+       ON CONFLICT (user_id, type) 
+       DO UPDATE SET count = lootboxes.count + 1`,
+      [userId, type]
+    );
+  },
+
+  async addAutoRole(guildId, roleId) {
+    await pool.query(
+      `INSERT INTO auto_roles(guild_id, role_id) 
+       VALUES($1, $2) 
+       ON CONFLICT (guild_id, role_id) 
+       DO NOTHING`,
+      [guildId, roleId]
+    );
+  },
+
+  async getAutoRoles(guildId) {
+    const result = await pool.query(
+      'SELECT role_id FROM auto_roles WHERE guild_id = $1',
+      [guildId]
+    );
+    return result.rows.map(row => row.role_id);
+  },
+
+  async removeAutoRole(guildId, roleId) {
+    await pool.query(
+      'DELETE FROM auto_roles WHERE guild_id = $1 AND role_id = $2',
+      [guildId, roleId]
+    );
   },
 };
 
