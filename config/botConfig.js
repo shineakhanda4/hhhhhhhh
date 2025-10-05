@@ -1,5 +1,5 @@
 module.exports = {
-  prefix: process.env.PREFIX || 'r!',
+  prefix: process.env.PREFIX || '!',
   embedColor: '#5865F2',
   ownerIds: [],
   
@@ -11,6 +11,16 @@ module.exports = {
     maxMentions: 5,
     maxEmojis: 10,
     capsPercentage: 70,
+  },
+  
+  antinuke: {
+    enabled: false,
+    maxChannelDeletes: 3,
+    maxRoleDeletes: 3,
+    maxBans: 3,
+    maxKicks: 5,
+    timeWindow: 10000,
+    punishmentType: 'remove_permissions',
   },
   
   ticket: {
