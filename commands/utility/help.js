@@ -7,8 +7,8 @@ module.exports = {
   async execute(message, args, client) {
     const embed = new EmbedBuilder()
       .setColor('#5865F2')
-      .setTitle('📚 Bot Commands')
-      .setDescription('Prefix: `' + client.config.prefix + '`')
+      .setTitle('📚 Bot Commands - 75+ Commands!')
+      .setDescription('Prefix: `' + client.config.prefix + '` | Features from Carl-bot, Falcon bot & OwO bot!')
       .addFields(
         { 
           name: '👮 Moderation', 
@@ -21,8 +21,8 @@ module.exports = {
           inline: false 
         },
         { 
-          name: '💬 Custom Commands', 
-          value: '`tag create`, `tag delete`, `tag list`, `tag info`, `trigger create`, `trigger delete`',
+          name: '💬 Custom Commands & Autoresponders', 
+          value: '`tag create`, `tag delete`, `tag list`, `tag info`, `trigger create`, `trigger delete`\n`autoresponder add/remove/list/toggle` (regex, wildcards)',
           inline: false 
         },
         { 
@@ -32,7 +32,7 @@ module.exports = {
         },
         { 
           name: '🎭 Roles', 
-          value: '`role add`, `role remove`, `reactionrole`, `buttonrole` (button assignment)',
+          value: '`role add`, `role remove`, `reactionrole`, `buttonrole`, `autorole add/remove/list`',
           inline: false 
         },
         { 
@@ -51,18 +51,43 @@ module.exports = {
           inline: false 
         },
         { 
-          name: '🛠️ Utility', 
-          value: '`remind`, `afk`, `note`, `serverinfo`, `userinfo`, `avatar`, `poll`',
+          name: '🛠️ Utility & Tools', 
+          value: '`remind`, `afk`, `note`, `serverinfo`, `userinfo`, `avatar`, `poll`\n`serverstats`, `pins`, `autopin`, `vcstats`, `backup create/list`',
           inline: false 
         },
         { 
           name: '🎮 Fun & Games', 
-          value: '`8ball`, `roll`, `coinflip`, `trivia`, `joke`, `blackjack`, `rps`, `meme`, `dog`, `cat`',
+          value: '`8ball`, `roll`, `trivia`, `joke`, `blackjack`, `rps`, `meme`, `dog`, `cat`',
           inline: false 
         },
         { 
-          name: '📊 Analytics (Unique)', 
-          value: '`analytics`, `stats`',
+          name: '🎰 Gambling (OwO-inspired)', 
+          value: '`slots`, `roulette`, `coinflip` (bet money and win big!)',
+          inline: false 
+        },
+        { 
+          name: '💰 Economy System', 
+          value: '`balance`, `daily`, `give`, `trade`\n`quest` (daily/weekly rewards), `hunt` (catch animals)',
+          inline: false 
+        },
+        { 
+          name: '🦁 Animals & Pets', 
+          value: '`hunt`, `zoo`, `petname`, `battle` (PvP with bets)',
+          inline: false 
+        },
+        { 
+          name: '💕 Social & Marriage', 
+          value: '`marry`, `accept`, `decline`, `divorce`, `hug`, `kiss`, `pat`, `cuddle`, `slap`, `bite`, `poke`, `boop`, `cookie`, `ship`',
+          inline: false 
+        },
+        { 
+          name: '📊 Levels & Stats', 
+          value: '`rank`, `leaderboard`, `invites`, `messages`, `vcstats`',
+          inline: false 
+        },
+        { 
+          name: '📈 Analytics', 
+          value: '`analytics`, `stats`, `serverstats`',
           inline: false 
         },
         { 
@@ -76,7 +101,7 @@ module.exports = {
           inline: false 
         }
       )
-      .setFooter({ text: 'Use !help <command> for detailed information' })
+      .setFooter({ text: 'Use !help <command> for details | 21+ database tables | Advanced logging system' })
       .setTimestamp();
 
     message.reply({ embeds: [embed] });
