@@ -8,7 +8,7 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor('#5865F2')
       .setTitle('📚 Bot Commands - 75+ Commands!')
-      .setDescription('Prefix: `' + client.config.prefix + '` | Features from Carl-bot, Falcon bot & OwO bot!')
+      .setDescription('Prefix: `' + client.config.prefix + '` | ')
       .addFields(
         { 
           name: '👮 Moderation', 
@@ -61,7 +61,7 @@ module.exports = {
           inline: false 
         },
         { 
-          name: '🎰 Gambling (OwO-inspired)', 
+          name: '🎰 Gambling ', 
           value: '`slots`, `roulette`, `coinflip` (bet money and win big!)',
           inline: false 
         },
