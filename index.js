@@ -33,6 +33,7 @@ for (const folder of commandFolders) {
     const filePath = path.join(folderPath, file);
     const command = require(filePath);
     if ('name' in command && 'execute' in command) {
+      command.category = folder;
       client.commands.set(command.name, command);
     }
   }

@@ -1,165 +1,300 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
+const categoryEmojis = {
+  moderation: '👮',
+  ticket: '🎫',
+  tags: '💬',
+  suggestion: '💡',
+  roles: '🎭',
+  embed: '📢',
+  giveaway: '🎉',
+  thread: '🧵',
+  utility: '🛠️',
+  fun: '🎮',
+  economy: '💰',
+  social: '💕',
+  levels: '📊',
+  leaderboard: '🏆',
+  invites: '📬',
+  analytics: '📈',
+  config: '⚙️',
+  memes: '🎨',
+  antinuke: '🛡️'
+};
+
+const categoryDescriptions = {
+  moderation: 'Server moderation and management',
+  ticket: 'Support ticket system',
+  tags: 'Custom commands & autoresponders',
+  suggestion: 'Community suggestion system',
+  roles: 'Role management and assignment',
+  embed: 'Embeds & announcements',
+  giveaway: 'Giveaway system',
+  thread: 'Thread management',
+  utility: 'Utility & tools',
+  fun: 'Fun commands & games',
+  economy: 'Economy & currency system',
+  social: 'Social & interaction commands',
+  levels: 'Leveling & XP system',
+  leaderboard: 'Rankings & leaderboards',
+  invites: 'Invite tracking',
+  analytics: 'Server analytics & statistics',
+  config: 'Bot configuration',
+  memes: 'Meme generators',
+  antinuke: 'Anti-nuke protection'
+};
+
+function getCommandsByCategory(client) {
+  const categories = {};
+  
+  for (const [name, command] of client.commands) {
+    const category = command.category || 'utility';
+    
+    if (!categories[category]) {
+      categories[category] = [];
+    }
+    categories[category].push(command);
+  }
+  
+  return categories;
+}
+
+function createCategoryEmbed(client, categories, page = 0) {
+  const categoryEntries = Object.entries(categories).sort((a, b) => a[0].localeCompare(b[0]));
+  const totalPages = Math.ceil(categoryEntries.length / 6);
+  const startIdx = page * 6;
+  const endIdx = Math.min(startIdx + 6, categoryEntries.length);
+  const pageCategories = categoryEntries.slice(startIdx, endIdx);
+  
+  const totalCommands = client.commands.size;
+  const totalCategories = categoryEntries.length;
+  
+  const embed = new EmbedBuilder()
+    .setColor('#5865F2')
+    .setTitle('🔥 R.O.T.I. Bot - Complete Command List 🔥')
+    .setDescription(
+      `**Prefix:** \`${client.config.prefix}\`\n` +
+      `**Total Commands:** ${totalCommands} | **Categories:** ${totalCategories}\n\n` +
+      `*Use \`${client.config.prefix}help <command>\` for detailed info*\n` +
+      `*Use \`${client.config.prefix}help <category>\` to see category commands*`
+    )
+    .setFooter({ 
+      text: `⚡ Page ${page + 1}/${totalPages} | Database-Backed | Auto-Moderation | Advanced Logging` 
+    })
+    .setTimestamp();
+
+  for (const [categoryName, commands] of pageCategories) {
+    const emoji = categoryEmojis[categoryName] || '📁';
+    const desc = categoryDescriptions[categoryName] || 'Commands';
+    const commandList = commands.slice(0, 10).map(cmd => `\`${cmd.name}\``).join(' ');
+    const more = commands.length > 10 ? ` +${commands.length - 10} more` : '';
+    
+    embed.addFields({
+      name: `${emoji} ${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)} (${commands.length})`,
+      value: `${commandList}${more}\n*${desc}*`,
+      inline: false
+    });
+  }
+  
+  return embed;
+}
+
+function createCategoryDetailEmbed(client, categoryName, commands) {
+  const emoji = categoryEmojis[categoryName] || '📁';
+  const desc = categoryDescriptions[categoryName] || 'Commands';
+  
+  const embed = new EmbedBuilder()
+    .setColor('#5865F2')
+    .setTitle(`${emoji} ${categoryName.charAt(0).toUpperCase() + categoryName.slice(1)} Commands`)
+    .setDescription(`**${desc}**\n\nTotal: ${commands.length} commands\n\nUse \`${client.config.prefix}help <command>\` for detailed info`)
+    .setTimestamp();
+
+  const sortedCommands = commands.sort((a, b) => a.name.localeCompare(b.name));
+
+  for (const cmd of sortedCommands) {
+    const aliases = cmd.aliases && cmd.aliases.length > 0 
+      ? ` (${cmd.aliases.map(a => `\`${a}\``).join(', ')})` 
+      : '';
+    const description = cmd.description || 'No description';
+    embed.addFields({
+      name: `${client.config.prefix}${cmd.name}${aliases}`,
+      value: description,
+      inline: false
+    });
+  }
+  
+  return embed;
+}
+
+function createNavigationButtons(page, totalPages) {
+  const row = new ActionRowBuilder();
+  
+  row.addComponents(
+    new ButtonBuilder()
+      .setCustomId('help_first')
+      .setLabel('⏮️ First')
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(page === 0),
+    new ButtonBuilder()
+      .setCustomId('help_prev')
+      .setLabel('◀️ Previous')
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(page === 0),
+    new ButtonBuilder()
+      .setCustomId('help_next')
+      .setLabel('Next ▶️')
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(page >= totalPages - 1),
+    new ButtonBuilder()
+      .setCustomId('help_last')
+      .setLabel('Last ⏭️')
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(page >= totalPages - 1)
+  );
+  
+  return row;
+}
+
 module.exports = {
   name: 'help',
-  description: 'Display all commands or get detailed info about a specific command',
+  description: 'Display all commands or get detailed info about a specific command/category',
   aliases: ['commands', 'h', 'cmds'],
+  usage: '[command|category]',
   async execute(message, args, client) {
+    const categories = getCommandsByCategory(client);
+    
     if (args.length > 0) {
-      const commandName = args[0].toLowerCase();
-      const command = client.commands.get(commandName) || 
-                      Array.from(client.commands.values()).find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+      const query = args[0].toLowerCase();
       
-      if (!command) {
-        return message.reply(`❌ Command \`${commandName}\` not found!`);
+      const command = client.commands.get(query) || 
+                      Array.from(client.commands.values()).find(cmd => 
+                        cmd.aliases && cmd.aliases.includes(query)
+                      );
+      
+      if (command) {
+        const detailEmbed = new EmbedBuilder()
+          .setColor('#5865F2')
+          .setTitle(`📖 Command: ${command.name}`)
+          .setDescription(command.description || 'No description available')
+          .setTimestamp();
+
+        if (command.aliases && command.aliases.length > 0) {
+          detailEmbed.addFields({
+            name: 'Aliases',
+            value: command.aliases.map(a => `\`${a}\``).join(', '),
+            inline: true
+          });
+        }
+
+        const usageText = command.usage 
+          ? `\`${client.config.prefix}${command.name} ${command.usage}\``
+          : `\`${client.config.prefix}${command.name}\``;
+        
+        detailEmbed.addFields({
+          name: 'Usage',
+          value: usageText,
+          inline: false
+        });
+
+        if (command.permissions && command.permissions.length > 0) {
+          detailEmbed.addFields({
+            name: 'Required Permissions',
+            value: command.permissions.map(p => `\`${p}\``).join(', '),
+            inline: false
+          });
+        }
+
+        if (command.category) {
+          const emoji = categoryEmojis[command.category] || '📁';
+          detailEmbed.addFields({
+            name: 'Category',
+            value: `${emoji} ${command.category.charAt(0).toUpperCase() + command.category.slice(1)}`,
+            inline: true
+          });
+        }
+
+        return message.reply({ embeds: [detailEmbed] });
       }
-
-      const detailEmbed = new EmbedBuilder()
-        .setColor('#5865F2')
-        .setTitle(`📖 Command: ${command.name}`)
-        .setDescription(command.description || 'No description available')
-        .addFields(
-          { name: 'Aliases', value: command.aliases ? command.aliases.map(a => `\`${a}\``).join(', ') : 'None', inline: true },
-          { name: 'Usage', value: command.usage || `\`${client.config.prefix}${command.name}\``, inline: true }
-        )
-        .setTimestamp();
-
-      return message.reply({ embeds: [detailEmbed] });
+      
+      if (categories[query]) {
+        const categoryEmbed = createCategoryDetailEmbed(client, query, categories[query]);
+        return message.reply({ embeds: [categoryEmbed] });
+      }
+      
+      return message.reply(`❌ Command or category \`${query}\` not found! Use \`${client.config.prefix}help\` to see all commands.`);
     }
 
-    const totalCommands = client.commands.size;
+    const categoryEntries = Object.entries(categories);
+    const totalPages = Math.ceil(categoryEntries.length / 6);
+    const embed = createCategoryEmbed(client, categories, 0);
+    const buttons = totalPages > 1 ? createNavigationButtons(0, totalPages) : null;
     
-    const embed = new EmbedBuilder()
-      .setColor('#5865F2')
-      .setTitle('🔥 R.O.T.I. Bot - Complete Command List 🔥')
-      .setDescription(`**Prefix:** \`${client.config.prefix}\`\n**Total Commands:** ${totalCommands}+ | **Categories:** 18 | **PostgreSQL Database**\n\n*Use \`${client.config.prefix}help <command>\` for detailed info*`)
-      .addFields(
-        { 
-          name: '👮 Moderation (11 Commands)', 
-          value: '`kick` `ban` `unban` `mute` `unmute` `warn` `warnings` `clearwarnings` `purge` `lockdown` `slowmode`',
-          inline: false 
-        },
-        { 
-          name: '🎫 Ticket System (5 Commands)', 
-          value: '`ticket create` `ticket close` `ticket add` `ticket remove` `ticket setup`\n*Button panel support for easy ticket creation*',
-          inline: false 
-        },
-        { 
-          name: '💬 Custom Commands & Autoresponders (10 Commands)', 
-          value: '`tag create` `tag delete` `tag list` `tag info` `tag edit` `trigger create` `trigger delete` `trigger list`\n`autoresponder add` `autoresponder remove` `autoresponder list` `autoresponder toggle`\n*Supports regex, wildcards, exact match, contains, starts/ends with*',
-          inline: false 
-        },
-        { 
-          name: '💡 Suggestion System (3 Commands)', 
-          value: '`suggest` `suggestion approve` `suggestion deny`\n*Community voting with upvote/downvote reactions*',
-          inline: false 
-        },
-        { 
-          name: '🎭 Role Management (8 Commands)', 
-          value: '`role add` `role remove` `role info` `role list` `reactionrole` `buttonrole` `autorole add` `autorole remove` `autorole list`\n*Interactive button roles & reaction roles*',
-          inline: false 
-        },
-        { 
-          name: '📢 Embeds & Announcements (2 Commands)', 
-          value: '`embed` `announce`\n*Create beautiful custom embeds with JSON*',
-          inline: false 
-        },
-        { 
-          name: '🎉 Giveaway System (4 Commands)', 
-          value: '`giveaway start` `giveaway end` `giveaway reroll` `giveaway list`\n*Multiple winners, automatic selection, reaction-based*',
-          inline: false 
-        },
-        { 
-          name: '🧵 Thread Management (4 Commands)', 
-          value: '`thread create` `thread archive` `thread lock` `thread delete`\n*Full thread control with permissions*',
-          inline: false 
-        },
-        { 
-          name: '🛠️ Utility & Tools (15 Commands)', 
-          value: '`remind` `afk` `note` `serverinfo` `userinfo` `avatar` `poll` `choose` `accountage`\n`serverstats` `pins` `autopin` `vcstats` `backup create` `backup list` `backup load`\n*Advanced analytics, voice stats tracking, server backups*',
-          inline: false 
-        },
-        { 
-          name: '🎮 Fun & Games (10 Commands)', 
-          value: '`8ball` `roll` `trivia` `joke` `blackjack` `rps` `meme` `dog` `cat` `fortune`\n*Interactive games with betting support*',
-          inline: false 
-        },
-        { 
-          name: '🎰 Casino Games (4 Commands)', 
-          value: '`slots` `roulette` `coinflip` `lottery`\n*Bet Cowoncy and win big! House edge applies*',
-          inline: false 
-        },
-        { 
-          name: '💰 Economy System (10 Commands)', 
-          value: '`balance` `daily` `give` `trade` `quest` `work` `rob` `deposit` `withdraw` `pay`\n*Complete economy with daily/weekly quests, trading system*',
-          inline: false 
-        },
-        { 
-          name: '🦁 Animals & Pets (4 Commands)', 
-          value: '`hunt` `zoo` `petname` `battle`\n*Catch animals, build your zoo, battle other players for money!*',
-          inline: false 
-        },
-        { 
-          name: '💕 Social & Marriage (15 Commands)', 
-          value: '`marry` `accept` `decline` `divorce` `hug` `kiss` `pat` `cuddle` `slap` `bite` `poke` `boop` `cookie` `ship` `communism`\n*Relationship system with fun interaction commands*',
-          inline: false 
-        },
-        { 
-          name: '📊 Levels & Rankings (5 Commands)', 
-          value: '`rank` `leaderboard` `levels` `invites` `messages`\n*XP system with customizable level rewards*',
-          inline: false 
-        },
-        { 
-          name: '📈 Analytics & Statistics (4 Commands)', 
-          value: '`analytics` `stats` `serverstats` `vcstats`\n*Detailed server analytics, activity tracking, voice statistics*',
-          inline: false 
-        },
-        { 
-          name: '⚙️ Server Configuration (8 Commands)', 
-          value: '`setlog` `setprefix` `automod` `welcome` `starboard` `config` `settings` `setup`\n*Full server customization: welcome messages, logging, auto-moderation*',
-          inline: false 
-        },
-        { 
-          name: '👑 Bot Admin Commands (5 Commands)', 
-          value: '`addadmin` `removeadmin` `listadmins` `addmoney` `removemoney` `setbalance` `reseteconomy`\n*Manage bot admins & economy (bot owner only)*',
-          inline: false 
-        },
-        { 
-          name: '🛡️ Anti-Nuke Protection (5 Commands)', 
-          value: '`antinuke enable` `antinuke disable` `antinuke status` `antinuke whitelist` `antinuke unwhitelist` `antinuke list`\n*Protect your server from mass bans, channel deletion, role changes*',
-          inline: false 
-        },
-        { 
-          name: '🎨 Meme Generators (10+ Templates)', 
-          value: '`drake` `distractedbf` `changemymind` `thinking` `ExpandingBrain` and more!\n*Create custom memes with text overlays*',
-          inline: false 
-        }
-      )
-      .setFooter({ 
-        text: `⚡ Advanced Features: Auto-moderation • Logging • XP System • Economy • Marriage • Anti-Nuke • Database-Backed` 
-      })
-      .setTimestamp();
+    const reply = await message.reply({ 
+      embeds: [embed], 
+      components: buttons ? [buttons] : [] 
+    });
 
-    const row = new ActionRowBuilder()
-      .addComponents(
-        new ButtonBuilder()
-          .setLabel('📊 Server Stats')
-          .setCustomId('stats_button')
-          .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setLabel('⚙️ Configuration')
-          .setCustomId('config_button')
-          .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-          .setLabel('🎮 Games')
-          .setCustomId('games_button')
-          .setStyle(ButtonStyle.Success),
-        new ButtonBuilder()
-          .setLabel('💰 Economy')
-          .setCustomId('economy_button')
-          .setStyle(ButtonStyle.Success)
-      );
+    if (totalPages <= 1) return;
 
-    message.reply({ embeds: [embed], components: [row] });
+    let currentPage = 0;
+
+    const collector = reply.createMessageComponentCollector({
+      time: 180000
+    });
+
+    collector.on('collect', async interaction => {
+      if (interaction.user.id !== message.author.id) {
+        return interaction.reply({ 
+          content: '❌ This is not your help menu!', 
+          ephemeral: true 
+        });
+      }
+
+      if (interaction.customId === 'help_first') {
+        currentPage = 0;
+      } else if (interaction.customId === 'help_prev') {
+        currentPage = Math.max(0, currentPage - 1);
+      } else if (interaction.customId === 'help_next') {
+        currentPage = Math.min(totalPages - 1, currentPage + 1);
+      } else if (interaction.customId === 'help_last') {
+        currentPage = totalPages - 1;
+      }
+
+      const newEmbed = createCategoryEmbed(client, categories, currentPage);
+      const newButtons = createNavigationButtons(currentPage, totalPages);
+      
+      await interaction.update({ 
+        embeds: [newEmbed], 
+        components: [newButtons] 
+      });
+    });
+
+    collector.on('end', () => {
+      const disabledButtons = new ActionRowBuilder()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('help_first_disabled')
+            .setLabel('⏮️ First')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+          new ButtonBuilder()
+            .setCustomId('help_prev_disabled')
+            .setLabel('◀️ Previous')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+          new ButtonBuilder()
+            .setCustomId('help_next_disabled')
+            .setLabel('Next ▶️')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true),
+          new ButtonBuilder()
+            .setCustomId('help_last_disabled')
+            .setLabel('Last ⏭️')
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true)
+        );
+      
+      reply.edit({ components: [disabledButtons] }).catch(() => {});
+    });
   },
 };
