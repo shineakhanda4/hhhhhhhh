@@ -238,6 +238,17 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 
 ## Recent Changes (October 6, 2025) - MASSIVE UPDATE!
 
+### 👑 Admin System & Economy Management (Just Added!)
+- ✅ **Bot Admin System** - Dedicated admin role separate from Discord permissions
+- ✅ **Add/Remove Admins** - `addadmin`, `removeadmin`, `listadmins` commands
+- ✅ **Economy Management Commands** (Admin only):
+  - `addmoney` - Give coins to any user
+  - `removemoney` - Take coins from any user
+  - `setbalance` - Set exact balance for any user
+  - `reseteconomy` - Reset all server economy data with confirmation
+- ✅ **Persistent Admin Storage** - Admins saved to database and loaded on startup
+- ✅ **Admin by Username** - Add admins by @mention, user ID, or exact username
+
 ### 🚀 Latest Additions - Carl-bot, Falcon bot & OwO bot Features
 - ✅ **Advanced Logging System Expansion** - Added 8 new event handlers:
   - guildMemberUpdate (nickname & role changes)

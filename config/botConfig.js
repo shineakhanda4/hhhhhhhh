@@ -2,6 +2,7 @@ module.exports = {
   prefix: process.env.PREFIX || '!',
   embedColor: '#5865F2',
   ownerIds: [],
+  adminIds: [],
   
   automod: {
     enabled: true,

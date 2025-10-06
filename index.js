@@ -51,7 +51,11 @@ for (const file of eventFiles) {
   }
 }
 
-initDatabase().then(() => {
+initDatabase().then(async () => {
+  const adminIds = await db.getBotAdmins();
+  client.config.adminIds = adminIds;
+  console.log(`✅ Loaded ${adminIds.length} bot admin(s)`);
+  
   client.login(process.env.DISCORD_TOKEN);
 }).catch(error => {
   console.error('Failed to initialize database:', error);

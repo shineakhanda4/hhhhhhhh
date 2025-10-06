@@ -92,7 +92,12 @@ module.exports = {
         },
         { 
           name: '⚙️ Configuration', 
-          value: '`setlog`, `setprefix`, `automod`, `welcome`, `starboard`',
+          value: '`setlog`, `setprefix`, `automod`, `welcome`, `starboard`\n`addadmin`, `removeadmin`, `listadmins` (bot admin management)',
+          inline: false 
+        },
+        { 
+          name: '👑 Admin Economy Management', 
+          value: '`addmoney`, `removemoney`, `setbalance`, `reseteconomy` (bot admins only)',
           inline: false 
         },
         { 

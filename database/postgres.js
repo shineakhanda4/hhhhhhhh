@@ -383,6 +383,14 @@ async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bot_admins (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
     console.log('✅ Database tables initialized successfully');
   } catch (error) {
     console.error('❌ Database initialization error:', error);
@@ -1219,6 +1227,30 @@ const db = {
        DO UPDATE SET nickname = $3`,
       [userId, animalId, petName]
     );
+  },
+
+  async addBotAdmin(userId) {
+    await pool.query(
+      'INSERT INTO bot_admins(user_id) VALUES($1) ON CONFLICT (user_id) DO NOTHING',
+      [userId]
+    );
+  },
+
+  async removeBotAdmin(userId) {
+    await pool.query(
+      'DELETE FROM bot_admins WHERE user_id = $1',
+      [userId]
+    );
+  },
+
+  async getBotAdmins() {
+    const result = await pool.query('SELECT user_id FROM bot_admins');
+    return result.rows.map(row => row.user_id);
+  },
+
+  async resetServerEconomy(guildId) {
+    await pool.query('DELETE FROM guild_economy WHERE guild_id = $1', [guildId]);
+    await pool.query('DELETE FROM quest_claims WHERE user_id IN (SELECT DISTINCT user_id FROM guild_economy WHERE guild_id = $1)', [guildId]);
   },
 };
 
