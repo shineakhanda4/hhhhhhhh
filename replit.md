@@ -18,14 +18,28 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 - Permission-based access control
 - **Button panel setup** for easy ticket creation
 
-### ✅ Logging System
+### ✅ Advanced Logging System (Carl-bot inspired)
 - Member join/leave tracking
-- Message deletion logging
+- Message deletion and editing logging
+- Role updates and changes tracking
+- Nickname changes logging
+- Voice channel activity (join/leave/switch)
+- Channel creation, updates, and deletion
+- Role creation, updates, and deletion
+- Ban/unban event logging
+- Voice state changes (mute/deafen)
 - Configurable log channel
 
-### ✅ Custom Commands
+### ✅ Custom Commands & Autoresponders (Carl-bot inspired)
 - Tag system (create, delete, list, info)
 - Trigger system for auto-responses
+- **Advanced autoresponder system** with multiple match types:
+  - Exact match
+  - Contains (substring)
+  - Starts with
+  - Ends with
+  - Regex pattern matching
+- Toggle autoresponders on/off
 - Usage tracking
 
 ### ✅ Suggestion System
@@ -56,8 +70,13 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 - Reminders with scheduled notifications
 - AFK status system
 - User notes for moderation
-- Server info, user info, avatar
+- **Server statistics** with detailed analytics
+- User info, avatar commands
 - Poll creation
+- **Message pinning system** (view all pins, pin count)
+- **Auto-pin threshold** (auto-pin messages with X reactions)
+- **Voice statistics** per user (total time, sessions, favorite channel)
+- **Backup/restore system** for server settings and configurations
 
 ### ✅ Fun Commands & Games
 - 8ball, dice roll, coin flip
@@ -66,6 +85,9 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 - **Blackjack game** with interactive buttons
 - **Rock-paper-scissors** game
 - **Meme, dog, cat** image commands
+- **Slots machine** (10x+ multipliers)
+- **Roulette** (bet on red/black or specific numbers, 35x on direct hits)
+- **Coinflip betting** (double your money)
 
 ### ✅ Analytics (Unique Feature)
 - Server activity tracking
@@ -116,21 +138,27 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 
 ### ✅ Economy System (OwO-bot inspired)
 - Cowoncy currency system
-- Daily rewards (100-150 Cowoncy)
+- **Quest system** with daily (1,000 coins) and weekly (7,500 coins) rewards
 - Balance tracking (wallet & bank)
-- Give/transfer commands
+- **Trading system** for money and items
+- Give/transfer commands with button confirmation
+- Server-based economy (separate balance per server)
 
 ### ✅ Animal Collection & Zoo (OwO-bot inspired)
-- Hunt for animals (common to legendary)
-- Build your zoo collection
+- **Enhanced hunt system** with 14 unique animals
+- 5 rarity tiers: Common, Uncommon, Rare, Epic, Legendary
+- Build your zoo collection with value-based rewards
+- **Pet naming system** (name and rename your animals)
+- Animal tracking and display
 - Rarity system (6 tiers)
 - Animal tracking and display
 
 ### ✅ Battle & RPG System (OwO-bot inspired)
-- Battle other users
-- Bet Cowoncy on battles
-- Animal-based power system
-- Win/loss tracking
+- **PvP battle arena** with dynamic power calculations
+- Bet money on battles
+- Power-based combat system
+- Winner takes all the wagered coins
+- Real-time battle results with embeds
 
 ### ✅ Gambling Games (OwO-bot inspired)
 - Slots machine (10x jackpot)
@@ -139,10 +167,12 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 - Blackjack (existing)
 
 ### ✅ Social & Action Commands (OwO-bot inspired)
-- Marriage system (propose, accept, divorce)
+- **Marriage system** with button-based proposals (propose, accept, decline, divorce)
+- Marriage proposal system with notifications
 - Action commands: hug, kiss, pat, cuddle, slap, bite, poke, boop, cookie
 - Ship calculator
 - Animated GIF reactions
+- Partner status tracking
 
 ### ✅ Meme Generators (OwO-bot inspired)
 - Drake meme generator
@@ -201,11 +231,37 @@ A comprehensive Discord bot inspired by R.O.T.I with all core features plus uniq
 ## Database
 - Uses PostgreSQL for persistent data storage
 - All moderation actions, tickets, tags, suggestions, giveaways, analytics, and anti-nuke whitelist are saved
-- 13 total database tables including the new anti-nuke whitelist
+- **21+ total database tables** including all new features
 - Data survives bot restarts and deployments
 - Automatic database initialization on startup
+- New tables: autoresponders, quest_claims, marriage_proposals, voice_sessions, guild_config, backups, guild_economy
 
-## Recent Changes (October 2025)
+## Recent Changes (October 6, 2025) - MASSIVE UPDATE!
+
+### 🚀 Latest Additions - Carl-bot, Falcon bot & OwO bot Features
+- ✅ **Advanced Logging System Expansion** - Added 8 new event handlers:
+  - guildMemberUpdate (nickname & role changes)
+  - voiceStateUpdate (join/leave/switch channels)
+  - channelCreate/channelUpdate
+  - roleCreate/roleUpdate
+  - messageUpdate (message edits)
+  - guildBanRemove (unban logging)
+- ✅ **Advanced Autoresponder System** - Regex patterns, wildcard matching, exact/contains/starts/ends with triggers
+- ✅ **Quest System** - Daily & weekly quests with 1,000 and 7,500 coin rewards
+- ✅ **Enhanced Gambling** - Slots machine (25x jackpot), Roulette (35x on number hits), improved coinflip
+- ✅ **Trading System** - Trade money and items between users with button confirmation
+- ✅ **Voice Statistics** - Track voice time, sessions, and favorite channels per user
+- ✅ **Message Pinning Tools** - View all pins, auto-pin threshold system
+- ✅ **Server Statistics Dashboard** - Comprehensive analytics with member counts, channel counts, activity metrics
+- ✅ **Backup/Restore System** - Save and restore server configurations, roles, and channels
+- ✅ **Pet Naming System** - Name and rename your collected animals
+- ✅ **PvP Battle Arena** - Battle other users with money wagering
+- ✅ **Enhanced Marriage System** - Proposal tracking, accept/decline commands added
+- ✅ **Server-based Economy** - Separate balance tracking per server
+- ✅ **8 New Database Tables** - autoresponders, quest_claims, marriage_proposals, voice_sessions, guild_config, backups, guild_economy, and enhanced tables
+- Total of **75+ commands** across 15+ categories now available!
+
+## Previous Changes (October 2025)
 - ✅ **Complete PostgreSQL migration** - All 13 database tables created and functional (warnings, mutes, tickets, tags, suggestions, giveaways, reminders, AFK, notes, reaction roles, analytics, triggers, anti-nuke whitelist)
 - ✅ **Anti-Nuke Protection System Added** - Comprehensive server security against mass deletions, bans, kicks, and unauthorized bots
 - ✅ **Command Prefix Changed** - Updated from `r!` to `!` for easier access
