@@ -181,6 +181,41 @@ async function checkTriggers(message, client) {
         break;
       }
     }
+
+    const autoresponders = await client.db.getAutoresponders(message.guild.id);
+    const messageContent = message.content;
+    
+    for (const ar of autoresponders) {
+      let matched = false;
+      
+      switch (ar.type) {
+        case 'exact':
+          matched = messageContent.toLowerCase() === ar.trigger.toLowerCase();
+          break;
+        case 'contains':
+          matched = messageContent.toLowerCase().includes(ar.trigger.toLowerCase());
+          break;
+        case 'starts':
+          matched = messageContent.toLowerCase().startsWith(ar.trigger.toLowerCase());
+          break;
+        case 'ends':
+          matched = messageContent.toLowerCase().endsWith(ar.trigger.toLowerCase());
+          break;
+        case 'regex':
+          try {
+            const regex = new RegExp(ar.trigger, 'i');
+            matched = regex.test(messageContent);
+          } catch (error) {
+            console.error('Invalid regex in autoresponder:', ar.trigger);
+          }
+          break;
+      }
+      
+      if (matched) {
+        message.reply(ar.response);
+        break;
+      }
+    }
   } catch (error) {
     console.error('Error checking triggers:', error);
   }

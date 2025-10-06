@@ -1210,6 +1210,16 @@ const db = {
   async getServerAnalytics(guildId) {
     return await this.getAnalytics(guildId);
   },
+
+  async setPetName(userId, animalId, petName) {
+    await pool.query(
+      `INSERT INTO pets(user_id, animal_id, nickname) 
+       VALUES($1, $2, $3) 
+       ON CONFLICT (user_id, animal_id) 
+       DO UPDATE SET nickname = $3`,
+      [userId, animalId, petName]
+    );
+  },
 };
 
 module.exports = { pool, db, initDatabase };
