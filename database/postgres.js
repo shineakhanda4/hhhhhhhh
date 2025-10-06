@@ -313,6 +313,76 @@ async function initDatabase() {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS autoresponders (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        trigger TEXT NOT NULL,
+        response TEXT NOT NULL,
+        type VARCHAR(50) DEFAULT 'exact',
+        enabled BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS quest_claims (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        quest_type VARCHAR(50) NOT NULL,
+        claimed_at BIGINT NOT NULL,
+        UNIQUE(user_id, quest_type)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marriage_proposals (
+        id SERIAL PRIMARY KEY,
+        proposer_id VARCHAR(255) NOT NULL,
+        target_id VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(proposer_id, target_id)
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS voice_sessions (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        channel_name VARCHAR(255),
+        duration BIGINT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS guild_config (
+        guild_id VARCHAR(255) PRIMARY KEY,
+        autopin_threshold INTEGER,
+        autoresponders_enabled BOOLEAN DEFAULT true
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS backups (
+        id VARCHAR(255) PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        backup_data JSONB NOT NULL,
+        created_at BIGINT NOT NULL
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS guild_economy (
+        id SERIAL PRIMARY KEY,
+        guild_id VARCHAR(255) NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        balance BIGINT DEFAULT 0,
+        UNIQUE(guild_id, user_id)
+      )
+    `);
+
     console.log('✅ Database tables initialized successfully');
   } catch (error) {
     console.error('❌ Database initialization error:', error);
@@ -943,6 +1013,202 @@ const db = {
       'DELETE FROM auto_roles WHERE guild_id = $1 AND role_id = $2',
       [guildId, roleId]
     );
+  },
+
+  async addAutoresponder(guildId, trigger, response, type) {
+    await pool.query(
+      'INSERT INTO autoresponders(guild_id, trigger, response, type) VALUES($1, $2, $3, $4)',
+      [guildId, trigger, response, type]
+    );
+  },
+
+  async removeAutoresponder(guildId, trigger) {
+    await pool.query(
+      'DELETE FROM autoresponders WHERE guild_id = $1 AND trigger = $2',
+      [guildId, trigger]
+    );
+  },
+
+  async getAutoresponders(guildId) {
+    const result = await pool.query(
+      'SELECT * FROM autoresponders WHERE guild_id = $1 AND enabled = true',
+      [guildId]
+    );
+    return result.rows;
+  },
+
+  async toggleAutoresponders(guildId) {
+    const result = await pool.query(
+      'SELECT autoresponders_enabled FROM guild_config WHERE guild_id = $1',
+      [guildId]
+    );
+    const currentState = result.rows.length > 0 ? result.rows[0].autoresponders_enabled : true;
+    const newState = !currentState;
+    
+    await pool.query(
+      `INSERT INTO guild_config(guild_id, autoresponders_enabled) 
+       VALUES($1, $2) 
+       ON CONFLICT (guild_id) 
+       DO UPDATE SET autoresponders_enabled = $2`,
+      [guildId, newState]
+    );
+    
+    return newState;
+  },
+
+  async canClaimQuest(userId, questType) {
+    const result = await pool.query(
+      'SELECT * FROM quest_claims WHERE user_id = $1 AND quest_type = $2',
+      [userId, questType]
+    );
+    
+    if (result.rows.length === 0) return true;
+    
+    const lastClaim = result.rows[0].claimed_at;
+    const now = Date.now();
+    const timeWindow = questType === 'daily' ? 86400000 : 604800000;
+    
+    return (now - lastClaim) >= timeWindow;
+  },
+
+  async markQuestClaimed(userId, questType) {
+    await pool.query(
+      `INSERT INTO quest_claims(user_id, quest_type, claimed_at) 
+       VALUES($1, $2, $3) 
+       ON CONFLICT (user_id, quest_type) 
+       DO UPDATE SET claimed_at = $3`,
+      [userId, questType, Date.now()]
+    );
+  },
+
+  async getNextQuestClaim(userId, questType) {
+    const result = await pool.query(
+      'SELECT claimed_at FROM quest_claims WHERE user_id = $1 AND quest_type = $2',
+      [userId, questType]
+    );
+    
+    if (result.rows.length === 0) return Math.floor(Date.now() / 1000);
+    
+    const lastClaim = result.rows[0].claimed_at;
+    const timeWindow = questType === 'daily' ? 86400000 : 604800000;
+    
+    return Math.floor((lastClaim + timeWindow) / 1000);
+  },
+
+  async createProposal(proposerId, targetId) {
+    await pool.query(
+      'INSERT INTO marriage_proposals(proposer_id, target_id) VALUES($1, $2)',
+      [proposerId, targetId]
+    );
+  },
+
+  async getProposal(proposerId, targetId) {
+    const result = await pool.query(
+      'SELECT * FROM marriage_proposals WHERE proposer_id = $1 AND target_id = $2',
+      [proposerId, targetId]
+    );
+    return result.rows.length > 0 ? result.rows[0] : null;
+  },
+
+  async deleteProposal(proposerId, targetId) {
+    await pool.query(
+      'DELETE FROM marriage_proposals WHERE proposer_id = $1 AND target_id = $2',
+      [proposerId, targetId]
+    );
+  },
+
+  async getVoiceStats(guildId, userId) {
+    const result = await pool.query(
+      'SELECT * FROM voice_stats WHERE guild_id = $1 AND user_id = $2',
+      [guildId, userId]
+    );
+    
+    if (result.rows.length === 0) return null;
+    
+    const sessionsResult = await pool.query(
+      'SELECT COUNT(*) as sessions, channel_name FROM voice_sessions WHERE guild_id = $1 AND user_id = $2 GROUP BY channel_name ORDER BY COUNT(*) DESC LIMIT 1',
+      [guildId, userId]
+    );
+    
+    return {
+      totalTime: result.rows[0].total_time,
+      sessions: sessionsResult.rows.length > 0 ? parseInt(sessionsResult.rows[0].sessions) : 0,
+      favoriteChannel: sessionsResult.rows.length > 0 ? sessionsResult.rows[0].channel_name : null
+    };
+  },
+
+  async addVoiceSession(guildId, userId, channelName, duration) {
+    await pool.query(
+      'INSERT INTO voice_sessions(guild_id, user_id, channel_name, duration) VALUES($1, $2, $3, $4)',
+      [guildId, userId, channelName, duration]
+    );
+  },
+
+  async getAutopinThreshold(guildId) {
+    const result = await pool.query(
+      'SELECT autopin_threshold FROM guild_config WHERE guild_id = $1',
+      [guildId]
+    );
+    return result.rows.length > 0 ? result.rows[0].autopin_threshold : null;
+  },
+
+  async setAutopinThreshold(guildId, threshold) {
+    await pool.query(
+      `INSERT INTO guild_config(guild_id, autopin_threshold) 
+       VALUES($1, $2) 
+       ON CONFLICT (guild_id) 
+       DO UPDATE SET autopin_threshold = $2`,
+      [guildId, threshold]
+    );
+  },
+
+  async createBackup(guildId, backupData) {
+    const backupId = `backup_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    await pool.query(
+      'INSERT INTO backups(id, guild_id, backup_data, created_at) VALUES($1, $2, $3, $4)',
+      [backupId, guildId, JSON.stringify(backupData), Date.now()]
+    );
+    return backupId;
+  },
+
+  async getBackups(guildId) {
+    const result = await pool.query(
+      'SELECT id, created_at FROM backups WHERE guild_id = $1 ORDER BY created_at DESC',
+      [guildId]
+    );
+    return result.rows;
+  },
+
+  async getBackup(backupId) {
+    const result = await pool.query(
+      'SELECT * FROM backups WHERE id = $1',
+      [backupId]
+    );
+    if (result.rows.length === 0) return null;
+    return JSON.parse(result.rows[0].backup_data);
+  },
+
+  async addMoney(guildId, userId, amount) {
+    await pool.query(
+      `INSERT INTO guild_economy(guild_id, user_id, balance) 
+       VALUES($1, $2, $3) 
+       ON CONFLICT (guild_id, user_id) 
+       DO UPDATE SET balance = guild_economy.balance + $3`,
+      [guildId, userId, amount]
+    );
+  },
+
+  async getBalance(guildId, userId) {
+    const result = await pool.query(
+      'SELECT balance FROM guild_economy WHERE guild_id = $1 AND user_id = $2',
+      [guildId, userId]
+    );
+    if (result.rows.length === 0) return 0;
+    return result.rows[0].balance;
+  },
+
+  async getServerAnalytics(guildId) {
+    return await this.getAnalytics(guildId);
   },
 };
 
